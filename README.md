@@ -1,2 +1,3 @@
 # web-mining-community-detection
-Web mining project: Community detection in twitter elonmusk
+Web mining project: Detect communities relevant to elonmusk on Twitter.
+
