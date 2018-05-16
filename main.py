@@ -5,6 +5,7 @@ import sys
 import getopt
 import networkx as nx
 import matplotlib.pyplot as plt
+from networkx.algorithms import community as nx_community
 
 def main(argv):
 	# ------------------------------------------------------------------------------
@@ -14,7 +15,7 @@ def main(argv):
 	SAMPLE_DATA_DIR = 'sample-data'
 
 	# ------------------------------------------------------------------------------
-	# TODO: Get arguments
+	# Get arguments
 	input_user_pairs_file = '%s/user_pairs.txt' % SAMPLE_DATA_DIR; # input data
 	output_graph_image_file = '%s/default.png' % OUT_DIR # output graph image
 	max_level = 2 # graph max level
@@ -93,7 +94,6 @@ def main(argv):
 	save_pickle(pairs, '%s/edges.pkl' % TEMP_DIR)
 	pairs = load_pickle('%s/edges.pkl' % TEMP_DIR)
 
-
 	# ------------------------------------------------------------------------------
 	# Create a graph from users and user pairs
 	## Adjacient list graph
@@ -146,6 +146,9 @@ def main(argv):
 	n_nodes = 0 # number of nodes
 
 	for i in range(max_level + 1):
+		if n_nodes == max_nodes: 
+			break
+			
 		for node_id in levels[i]:
 			# Add to nodes
 			# reduced_node_ids.add(node_id)
@@ -237,9 +240,6 @@ def main(argv):
 	print('...\nDONE step detect community')
 	print('-----------------------')
 
-	print(reduced_node_ids)
-	print(id_community_map)
-
 	# # ------------------------------------------------------------------------------
 	# # Use communities to color the nodes
 	# print('Step color')
@@ -311,6 +311,12 @@ def main(argv):
 		for adj_id in adj_list:
 			G.add_edge(nid, adj_id)
 
+	# ## Girvan Newman
+	# nx_comms = nx_community.girvan_newman(G)
+	# top_comms = next(nx_comms)
+	# for comm in top_comms:
+	# 	print(comm)
+
 	## Write to file
 	nx.write_gexf(G, '%s/elonmusk_reduced_lv%d.gexf' % (OUT_DIR, max_level))
 
@@ -357,7 +363,6 @@ def colors_object(colors_dic, node_ids):
 		NIdColorH[nid] = colors_dic[nid]
 
 	return NIdColorH
-
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
