@@ -1,4 +1,4 @@
-# import snap
+import snap
 import random
 import pickle
 import sys
@@ -135,7 +135,6 @@ def main(argv):
 		levels.append(this_level)
 
 	## Reduced nodes
-	# node_ids = set.union(*levels)
 	print('Number of nodes in each level:')
 	for i in range(len(levels)):
 		print('Level %d: %d' % (i, len(levels[i])))
@@ -198,142 +197,122 @@ def main(argv):
 	print('Number of edges: %d' % (n_edges))
 	print('-----------------------')	
 
-	# Snap graph
-	if False:
-		# ------------------------------------------------------------------------------
-		# TODO: Create snap graph
-		print('Step create graph')
+	# ------------------------------------------------------------------------------
+	# Create snap graph
+	print('Step create graph')
 
-		# print(reduced_node_ids)
-		# print(reduced_adj_list)
+	## Graph for community detection
+	UG = create_graph(reduced_node_ids, reduced_adj_list, id_label_map)
 
-		## Graph for community detection
-		UG = create_graph(reduced_node_ids, reduced_adj_list, id_label_map)
+	# for node in UG.Nodes():
+	# 	print(node.GetId())
+	# for edge in UG.Edges():
+	# 	print(edge.GetId())
 
-		# # Create new graph
-		# UG = snap.TUNGraph.New()
+	## Graph for drawing
+	UG2 = create_graph(reduced_node_ids, reduced_adj_list, id_label_map)
 
-		# # Add nodes
-		# for nid in reduced_node_ids:
-		# 	UG.AddNode(int(nid))
+	# FIn2 = snap.TFIn('%s/UG2.graph' % TEMP_DIR)
+	# UG2 = snap.TUNGraph.Load(FIn2)
 
-		# # Add edges
-		# for nid in reduced_adj_list.keys():
-		# 	adj_list = reduced_adj_list[nid]
-		# 	for adj_nid in adj_list:
-		# 		UG.AddEdge(int(nid), int(adj_nid))
+	print('...\nDONE step create graph')
+	print('-----------------------')
 
-		# for node in UG.Nodes():
-		# 	print(node.GetId())
-		# for edge in UG.Edges():
-		# 	print(edge.GetId())
+	# ------------------------------------------------------------------------------
+	# Run Given-Newman algorithm
+	## Comunities
+	print('Step detect communities')
 
-		## Graph for drawing
-		UG2 = create_graph(reduced_node_ids, reduced_adj_list, id_label_map)
+	CmtyV = snap.TCnComV()
+	modularity = snap.CommunityGirvanNewman(UG, CmtyV) 
+	
+	## Map node id to community
+	id_community_map = {} 
+	i = 0
+	for Cmty in CmtyV:
+		for NI in Cmty:
+			id_community_map[NI] = i
+		i += 1
 
-		# # Create new graph
-		# UG2 = snap.TUNGraph.New()
+	print('...\nDONE step detect community')
+	print('-----------------------')
 
-		# # Add nodes
-		# for nid in reduced_node_ids:
-		# 	UG2.AddNode(int(nid))
+	print(reduced_node_ids)
+	print(id_community_map)
 
-		# # Add edges
-		# for nid in reduced_adj_list.keys():
-		# 	adj_list = reduced_adj_list[nid]
-		# 	for adj_nid in adj_list:
-		# 		UG2.AddEdge(int(nid), int(adj_nid))
+	# # ------------------------------------------------------------------------------
+	# # Use communities to color the nodes
+	# print('Step color')
 
-		# FIn2 = snap.TFIn('%s/UG2.graph' % TEMP_DIR)
-		# UG2 = snap.TUNGraph.Load(FIn2)
+	# ## Colors map
+	# colors = {}
 
-		print('...\nDONE step create graph')
-		print('-----------------------')
+	# for Cmty in CmtyV:
+	# 	# Random color
+	# 	r = lambda: random.randint(0,255)
+	# 	color = '#%02X%02X%02X' % (r(),r(),r())
+	# 	print("Community: ")
+	# 	comms = ''
+	# 	for NI in Cmty:
+	# 		comms += str(NI) + ' '
+	# 		colors[NI] = color
+	# 	print(comms)
 
-		# ------------------------------------------------------------------------------
-		# TODO: Run Given-Newman algorithm
-		## Comunities
-		print('Step detect communities')
+	# print("The modularity of the network is %f" % modularity)
+	# print('-----------------------')
 
-		CmtyV = snap.TCnComV()
-		# modularity = snap.CommunityCNM(UG, CmtyV)
-		modularity = snap.CommunityGirvanNewman(UG, CmtyV)
+	# ## Save color
+	# save_pickle(colors, '%s/colors_lv%d.pkl' % (TEMP_DIR, max_level))
+	# colors = load_pickle('%s/colors_lv%d.pkl' % (TEMP_DIR, max_level))
 
-		print('...\nDONE step detect community')
-		print('-----------------------')
+	# # ------------------------------------------------------------------------------
+	# # Draw and save graph using GViz
+	# ## Draw
+	# print('Step draw')
 
-		# ------------------------------------------------------------------------------
-		# Use communities to color the nodes
-		print('Step color')
+	# ### Get color hash
+	# NIdColorH = colors_object(colors, reduced_node_ids)
 
-		## Colors map
-		colors = {}
+	# # snap.DrawGViz(UG2, snap.gvlNeato, "%s/Neato_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
+	# # snap.DrawGViz(UG2, snap.gvlTwopi, "%s/Twopi_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
+	
+	# ## Draw with colors
+	# snap.DrawGViz(UG2, snap.gvlSfdp, "%s/Sfdp_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
+	
+	# # ### Draw without colors
+	# # snap.DrawGViz(UG2, snap.gvlSfdp, "%s/Sfdp_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True)
+	
+	# print('...\nDONE step draw')
+	# print('-----------------------')
 
-		for Cmty in CmtyV:
-			# Random color
-			r = lambda: random.randint(0,255)
-			color = '#%02X%02X%02X' % (r(),r(),r())
-			print("Community: ")
-			comms = ''
-			for NI in Cmty:
-				comms += str(NI) + ' '
-				colors[NI] = color
-			print(comms)
-
-		print("The modularity of the network is %f" % modularity)
-		print('-----------------------')
-
-		## Save color
-		save_pickle(colors, '%s/colors_lv%d.pkl' % (TEMP_DIR, max_level))
-		colors = load_pickle('%s/colors_lv%d.pkl' % (TEMP_DIR, max_level))
-
-		# ------------------------------------------------------------------------------
-		# TODO: Draw and save graph
-		## Draw
-		print('Step draw')
-
-		### Get color hash
-		NIdColorH = colors_object(colors, reduced_node_ids)
-
-		# snap.DrawGViz(UG2, snap.gvlNeato, "%s/Neato_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
-		# snap.DrawGViz(UG2, snap.gvlTwopi, "%s/Twopi_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
-		
-		## Draw with colors
-		snap.DrawGViz(UG2, snap.gvlSfdp, "%s/Sfdp_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True, NIdColorH)
-		
-		# ### Draw without colors
-		# snap.DrawGViz(UG2, snap.gvlSfdp, "%s/Sfdp_color_lv%d.png" % (OUT_DIR, max_level), "Elonmusk", True)
-		
-		print('...\nDONE step draw')
-		print('-----------------------')
-
-		# ------------------------------------------------------------------------------
-		print('INFO:')
-		print('\nNode - id:')
-		for nid in reduced_node_ids:
-			print('%d - %s' % (nid, reduced_id_label_map[nid]))
-		print('\nStart node ID: %d' % (reduced_label_id_map[start_node]))
-		print('-----------------------')
 
 
 	# ------------------------------------------------------------------------------
-	# TODO: Networkx
+	# Log
+	print('INFO:')
+	print('\nNode - id:')
+	for nid in reduced_node_ids:
+		print('%d - %s' % (nid, reduced_id_label_map[nid]))
+	print('\nStart node ID: %d' % (reduced_label_id_map[start_node]))
+	print('-----------------------')
+
+
+	# ------------------------------------------------------------------------------
+	# Save to gexf networkx
 	## Create graph
 	G = nx.Graph()
+
 	for nid in reduced_adj_list.keys():
 		# Add node and label
-		G.add_node(nid, label=reduced_id_label_map[nid])
+		G.add_node(nid, label=reduced_id_label_map[nid], community=id_community_map[nid])
 		
 		# Add edges
 		adj_list = reduced_adj_list[nid]
 		for adj_id in adj_list:
 			G.add_edge(nid, adj_id)
-	
-	## Draw
-	# nx.draw(G)
-	
+
 	## Write to file
-	nx.write_gexf(G, '%s/elonmusk_reduced_lv%d.gexf' % (TEMP_DIR, max_level))
+	nx.write_gexf(G, '%s/elonmusk_reduced_lv%d.gexf' % (OUT_DIR, max_level))
 
 	return 0;	
 
@@ -353,7 +332,7 @@ def create_graph(node_ids, adjacient_list, id_label_map):
 	# Create new graph
 	UG = snap.TUNGraph.New()
 
-	# Labels
+	# # Labels
 	# labels = snap.TIntStrH()
 	# for nid in node_ids:
 	# 	labels[nid] = id_label_map[nid]
@@ -383,7 +362,3 @@ def colors_object(colors_dic, node_ids):
 if __name__ == '__main__':
 	main(sys.argv[1:])
 
-# # Labels
-# labels = snap.TIntStrH()
-# for NI in UGraph.Nodes():
-#         labels[NI.GetId()] = str(NI.GetId())
