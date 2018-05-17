@@ -5,6 +5,20 @@ Run:
 
 	$ python main.py -i <input-edges-file> -l <max-graph-level> -s <start-node-label> -n <max_nodes>
 
+where input file format is similar to file sample-data/user_pairs.txt:
+
+	decodethefirm-CarsThatThink
+	decodethefirm-MikeSpectorWSJ
+	decodethefirm-claireeboston
+	decodethefirm-ryanfelton
+	decodethefirm-Telluride
+	decodethefirm-elonmusk
+	decodethefirm-DunneAutomotive
+	decodethefirm-NAIASDetroit
+	cdelancray-cdelancray
+	cdelancray-Joi
+	cdelancray-rodneyabrooks
+
 Example:
 
 	$ python main.py -i edge.txt -l 6 -s elonmusk -n 1000

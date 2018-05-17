@@ -3,6 +3,7 @@ import random
 import pickle
 import sys
 import getopt
+import time
 import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.algorithms import community as nx_community
@@ -148,7 +149,7 @@ def main(argv):
 	for i in range(max_level + 1):
 		if n_nodes == max_nodes: 
 			break
-			
+
 		for node_id in levels[i]:
 			# Add to nodes
 			# reduced_node_ids.add(node_id)
@@ -161,14 +162,18 @@ def main(argv):
 			if n_nodes == max_nodes:
 				break
 
+	# print(reduced_label_id_map)
+	# print(reduced_id_label_map)
+
 	## Reduced adjacent list
 	reduced_adj_list = {} # reduced adjacient list
 	n_edges = 0
 
-	for node_id in reduced_node_ids:
+	for nid in reduced_node_ids:
 		new_adjacient_list = []
-		for nid in adjacient_list[node_id]:
-			label = id_label_map[nid]
+		old_nid = label_id_map[reduced_id_label_map[nid]]
+		for old_adj_nid in adjacient_list[old_nid]:
+			label = id_label_map[old_adj_nid]
 			if reduced_label_id_map.has_key(label):
 				new_adjacient_list.append(reduced_label_id_map[label])
 
@@ -176,11 +181,13 @@ def main(argv):
 		# reduced_adj_list[node_id] = set.intersection(*[set(new_adjacient_list),\
 		# 		reduced_node_ids])
 		
-		reduced_adj_list[node_id] = new_adjacient_list
+		reduced_adj_list[nid] = new_adjacient_list
 
-		n_edges += len(reduced_adj_list[node_id])
+		n_edges += len(reduced_adj_list[nid])
 
-	
+	# print(reduced_id_label_map)
+	# print(reduced_adj_list)
+	# return
 
 	## Save reduced
 	save_pickle(reduced_node_ids, '%s/reduced_node_ids_lv%d.pkl' % (TEMP_DIR, max_level))
@@ -197,7 +204,7 @@ def main(argv):
 
 	print('After reducing:')
 	print('Number of nodes: %d' % (len(reduced_node_ids)))
-	print('Number of edges: %d' % (n_edges))
+	print('Number of edges: %d' % (n_edges / 2))
 	print('-----------------------')	
 
 	# ------------------------------------------------------------------------------
@@ -227,15 +234,24 @@ def main(argv):
 	print('Step detect communities')
 
 	CmtyV = snap.TCnComV()
-	modularity = snap.CommunityGirvanNewman(UG, CmtyV) 
+
+	t0 = time.time()
+	modularity = snap.CommunityGirvanNewman(UG, CmtyV)
+	print('Girvan - Newman time: %f' % (time.time() - t0))
 	
 	## Map node id to community
 	id_community_map = {} 
 	i = 0
 	for Cmty in CmtyV:
+		print("Community: ")
+		comms = ''
 		for NI in Cmty:
-			id_community_map[NI] = i
+			comms += str(NI) + ' '
+			id_community_map[NI] = i		
+		print(comms)
 		i += 1
+
+	print("The modularity of the network is %f" % modularity)
 
 	print('...\nDONE step detect community')
 	print('-----------------------')
@@ -285,8 +301,6 @@ def main(argv):
 	# print('...\nDONE step draw')
 	# print('-----------------------')
 
-
-
 	# ------------------------------------------------------------------------------
 	# Log
 	print('INFO:')
@@ -311,11 +325,15 @@ def main(argv):
 		for adj_id in adj_list:
 			G.add_edge(nid, adj_id)
 
-	# ## Girvan Newman
+	## Girvan Newman
+	# print('Networkx communities')
+	# t0 = time.time()
 	# nx_comms = nx_community.girvan_newman(G)
-	# top_comms = next(nx_comms)
-	# for comm in top_comms:
-	# 	print(comm)
+	# print('Time: %f' % (time.time() - t0))
+
+	# for next_comms in nx_comms:
+	# 	for comm in next_comms:
+	# 		print(comm)
 
 	## Write to file
 	nx.write_gexf(G, '%s/elonmusk_reduced_lv%d.gexf' % (OUT_DIR, max_level))
@@ -351,7 +369,8 @@ def create_graph(node_ids, adjacient_list, id_label_map):
 	for nid in adjacient_list.keys():
 		adj_list = adjacient_list[nid]
 		for adj_nid in adj_list:
-			UG.AddEdge(int(nid), int(adj_nid))
+			if not UG.IsEdge(int(nid), int(adj_nid)) and not UG.IsEdge(int(adj_nid), int(nid)):
+				UG.AddEdge(int(nid), int(adj_nid))
 
 	return UG
 
